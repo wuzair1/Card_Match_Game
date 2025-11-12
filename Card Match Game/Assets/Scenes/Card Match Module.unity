@@ -2287,7 +2287,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1943195078}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: Match Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2423,6 +2423,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Card
       objectReference: {fileID: 0}
+    - target: {fileID: 8736969469772416074, guid: 152226a700f376c4d839b213e92c420c, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 6f42eb8ee909dec42aa589f81ae08dfc, type: 2}
     - target: {fileID: 8930003347086097679, guid: 152226a700f376c4d839b213e92c420c, type: 3}
       propertyPath: m_PreserveAspect
       value: 1
