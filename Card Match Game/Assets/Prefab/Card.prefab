@@ -244,9 +244,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   controller: {fileID: 0}
-  cardBack: {fileID: 0}
-  cardAnimation: {fileID: 0}
-  img_Back: {fileID: 0}
+  cardBack: {fileID: 253303264513648981}
+  cardAnimation: {fileID: 8736969469772416074}
+  img_Back: {fileID: 5384674631419856451}
   selected: 0
   clickSound: {fileID: 3011094428141852274}
 --- !u!82 &3011094428141852274
@@ -402,7 +402,7 @@ Animator:
   m_GameObject: {fileID: 7492653469084613541}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 2b8be66c168c19645919ed8c67e99bc4, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

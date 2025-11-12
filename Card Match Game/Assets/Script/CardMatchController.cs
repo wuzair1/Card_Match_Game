@@ -33,6 +33,9 @@ public class CardMatchController : MonoBehaviour
     // Declare firstMov and secondMov
     private Vector3 firstMov = Vector3.zero;
     private Vector3 secondMov = Vector3.zero;
+
+    public bool Check;
+    public int i;
     public bool canReveal => _secondRevealed == null;
     private void InitializeCards()
     {
@@ -42,16 +45,45 @@ public class CardMatchController : MonoBehaviour
 
         images6 = new Sprite[6];
 
-       
+        GetRandomNumbers(6);
 
-       
+        for (int i = 0; i < totalSize; i++)
+        {
+            int id = numbers[i];
+            card[i].ChangeSprite(id, images6[id]);
+        }
+
+
     }
     private void Start()
     {
         InitializeCards();
         
     }
-   
+    public void GetRandomNumbers(int count)
+    {
+        selectedNumbers.Clear();
+        count = Mathf.Min(count, numberList.Count);
+
+        while (selectedNumbers.Count < count)
+        {
+            int randomIndex = Random.Range(0, numberList.Count);
+            int selectedNumber = numberList[randomIndex];
+
+            if (!selectedNumbers.Contains(selectedNumber))
+            {
+                selectedNumbers.Add(selectedNumber);
+            }
+        }
+
+        int no = 0;
+        foreach (int number in selectedNumbers)
+        {
+            images6[no] = images[number];
+            no++;
+        }
+    }
+
     private int[] ShuffleArray(int[] numbers)
     {
         int[] newArray = numbers.Clone() as int[];
