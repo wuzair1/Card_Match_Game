@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
@@ -15,14 +15,23 @@ public class CardMatchController : MonoBehaviour
 
     [Header("Cards & Images")]
     [SerializeField] private MatchMainCard[] card;
-    [SerializeField] private Sprite[] images;   // All available images
-    [SerializeField] private Sprite[] images6;  // Selected for this level
+    [SerializeField] private Sprite[] images; 
+    [SerializeField] private Sprite[] images6; 
 
     [Header("Effects & UI")]
     public AudioSource matchSound;
+    public AudioSource mismatchSound;
+    public Text scoreLabel;
     public GameObject levelCompletePanel;
-    [SerializeField] private Text scoreLabel;
-    [SerializeField] private Text timerLabel;
+
+    [Header("Timer Settings")]
+    public Text timerText;
+    public float startTime = 60f;
+    private float currentTime;
+    private bool timerRunning = true;
+    private Color normalColor = Color.green;
+    private Color lowTimeColor = Color.red;
+    private Coroutine flashRoutine;
 
     private List<int> numberList = new List<int>();
     private List<int> selectedNumbers = new List<int>();
@@ -30,32 +39,73 @@ public class CardMatchController : MonoBehaviour
     private MatchMainCard _secondRevealed;
     private bool isChecking = false;
 
-    private int _score = 0;
-    private float _timeRemaining = 60f; // Initial timer duration
-    private bool _isTimerRunning = true;
-
+    [SerializeField] private int _score = 0;
     public bool canReveal => _secondRevealed == null;
 
     private void Start()
     {
         InitializeCards();
-        UpdateTimerLabel();
+        StartTimer();
     }
 
-    private void Update()
+    #region Timer
+    private void StartTimer()
     {
-        if (!_isTimerRunning) return;
-
-        _timeRemaining -= Time.deltaTime;
-        if (_timeRemaining <= 0)
-        {
-            _timeRemaining = 0;
-            _isTimerRunning = false;
-            StartCoroutine(CompleteGame());
-        }
-
-        UpdateTimerLabel();
+        currentTime = startTime;
+        timerRunning = true;
+        UpdateTimerUI();
+        StartCoroutine(TimerCountdown());
     }
+
+    private IEnumerator TimerCountdown()
+    {
+        while (timerRunning)
+        {
+            yield return new WaitForSeconds(1f);
+            currentTime -= 1f;
+
+            if (currentTime <= 0)
+            {
+                currentTime = 0;
+                timerRunning = false;
+                // Optional: End game when time runs out
+                levelCompletePanel.SetActive(true);
+            }
+
+            UpdateTimerUI();
+        }
+    }
+
+    private void UpdateTimerUI()
+    {
+        int minutes = Mathf.FloorToInt(currentTime / 60);
+        int seconds = Mathf.FloorToInt(currentTime % 60);
+        timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+
+        if (currentTime <= 20)
+            timerText.color = lowTimeColor;
+        else
+            timerText.color = normalColor;
+    }
+
+
+    private IEnumerator FlashRedTimer()
+    {
+        if (flashRoutine != null)
+            StopCoroutine(flashRoutine);
+
+        flashRoutine = StartCoroutine(FlashRoutine());
+        mismatchSound.Play();
+        yield return null;
+    }
+
+    private IEnumerator FlashRoutine()
+    {
+        timerText.color = lowTimeColor;
+        yield return new WaitForSeconds(1f);
+        UpdateTimerUI();
+    }
+    #endregion
 
     #region Card Initialization
     private void InitializeCards()
@@ -64,8 +114,7 @@ public class CardMatchController : MonoBehaviour
         numbers = ShuffleArray(numbers);
 
         numberList.Clear();
-        for (int i = 0; i < totalSize; i++)
-            numberList.Add(i);
+        numberList.AddRange(new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
 
         images6 = new Sprite[6];
         GetRandomNumbers(6);
@@ -77,7 +126,7 @@ public class CardMatchController : MonoBehaviour
         }
     }
 
-    private void GetRandomNumbers(int count)
+    public void GetRandomNumbers(int count)
     {
         selectedNumbers.Clear();
         count = Mathf.Min(count, numberList.Count);
@@ -86,22 +135,26 @@ public class CardMatchController : MonoBehaviour
         {
             int randomIndex = Random.Range(0, numberList.Count);
             int selectedNumber = numberList[randomIndex];
+
             if (!selectedNumbers.Contains(selectedNumber))
                 selectedNumbers.Add(selectedNumber);
         }
 
         for (int i = 0; i < selectedNumbers.Count; i++)
+        {
             images6[i] = images[selectedNumbers[i]];
+        }
     }
 
     private int[] ShuffleArray(int[] numbers)
     {
-        for (int i = 0; i < numbers.Length; i++)
+        int[] newArray = numbers.Clone() as int[];
+        for (int i = 0; i < newArray.Length; i++)
         {
-            int r = Random.Range(i, numbers.Length);
-            (numbers[i], numbers[r]) = (numbers[r], numbers[i]);
+            int r = Random.Range(i, newArray.Length);
+            (newArray[i], newArray[r]) = (newArray[r], newArray[i]);
         }
-        return numbers;
+        return newArray;
     }
     #endregion
 
@@ -139,7 +192,9 @@ public class CardMatchController : MonoBehaviour
         }
 
         if (_score >= 60)
+        {
             StartCoroutine(CompleteGame());
+        }
 
         _firstRevealed = null;
         _secondRevealed = null;
@@ -149,57 +204,35 @@ public class CardMatchController : MonoBehaviour
     private void HandleTileMismatch()
     {
         Debug.Log("Tile Not Match");
-        _timeRemaining -= 10f;
-        if (_timeRemaining < 0) _timeRemaining = 0;
 
-        UpdateTimerLabel();
+        currentTime = Mathf.Max(0, currentTime - 5f); // Deduct 10 seconds
+        StartCoroutine(FlashRedTimer());
 
-        _firstRevealed?.Unreveal();
-        _secondRevealed?.Unreveal();
+        if (_firstRevealed != null) _firstRevealed.Unreveal();
+        if (_secondRevealed != null) _secondRevealed.Unreveal();
     }
 
     private void HandleTileMatch()
     {
         Debug.Log("Tile Match");
+        _score += 10; // Fixed increment
+        currentTime = Mathf.Max(0, currentTime + 20f); // Deduct 10 seconds
+        scoreLabel.text = "Score: " + _score;
 
-        if (PlayerPrefs.GetInt("Sound", 1) == 1)
-            matchSound?.Play();
-
-        Transform card1 = _firstRevealed.transform;
-        Transform card2 = _secondRevealed.transform;
-        Vector3 scorePos = scoreLabel.transform.position;
-
-        Sequence seq = DOTween.Sequence();
-
-        seq.Append(card1.DOMove(scorePos, 0.25f).SetEase(Ease.InOutQuad));
-        seq.Join(card2.DOMove(scorePos, 0.25f).SetEase(Ease.InOutQuad));
-
-        seq.Join(card1.DOScale(0.5f, 0.2f));
-        seq.Join(card2.DOScale(0.5f, 0.2f));
-
-        seq.AppendInterval(0.1f);
-
-        seq.AppendCallback(() =>
+        if (matchSound != null && PlayerPrefs.GetInt("Sound", 1) == 1)
         {
-            card1.gameObject.SetActive(false);
-            card2.gameObject.SetActive(false);
+            matchSound.Play();
+        }
 
-            _score += 10;
-            scoreLabel.text = $"Score: {_score}";
-        });
+        // Match animation (disappear)
+        _firstRevealed.transform.DOScale(Vector3.zero, 0.3f);
+        _secondRevealed.transform.DOScale(Vector3.zero, 0.3f);
     }
     #endregion
 
-    private void UpdateTimerLabel()
-    {
-        int minutes = Mathf.FloorToInt(_timeRemaining / 60);
-        int seconds = Mathf.FloorToInt(_timeRemaining % 60);
-        timerLabel.text = $"Time: {minutes:00}:{seconds:00}";
-    }
-
     private IEnumerator CompleteGame()
     {
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(1);
         levelCompletePanel.SetActive(true);
     }
 }
