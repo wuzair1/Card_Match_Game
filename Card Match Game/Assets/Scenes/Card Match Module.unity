@@ -1089,7 +1089,6 @@ MonoBehaviour:
   - {fileID: 21300000, guid: cca090100dad8e845b3a8166fed160ed, type: 3}
   - {fileID: 21300000, guid: baf050059fbdb154bb92b717a2770c95, type: 3}
   - {fileID: 21300000, guid: fecea0030690e5845a3be2d149e76f14, type: 3}
-  images6: []
   matchSound: {fileID: 1577832599}
   mismatchSound: {fileID: 1980621517}
   bonusSound: {fileID: 1725077564}
@@ -1101,10 +1100,12 @@ MonoBehaviour:
   levelFailedScoreText: {fileID: 636386546}
   levelFailedHighScoreText: {fileID: 1985316152}
   timerText: {fileID: 733579516}
-  startTime: 80
+  startTime: 120
   bonusTimeWindow: 5
-  bonusText: {fileID: 0}
+  bonusText: {fileID: 895833615}
   _score: 0
+  MatchCard: 0
+  previewTime: 3
 --- !u!4 &490236697
 Transform:
   m_ObjectHideFlags: 0

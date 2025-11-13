@@ -58,13 +58,12 @@ public class CardMatchController : MonoBehaviour
     [SerializeField] private int MatchCard = 0;
     [Header("Preview Settings")]
     public float previewTime = 3f; // Time to show all cards at start
-
+    private const string GameSceneName = "Menu"; // ✅ Change if needed
     public bool canReveal => _secondRevealed == null;
 
     private void Start()
     {
         InitializeCards();
-        StartTimer();
 
         if (levelFailedPanel != null) levelFailedPanel.SetActive(false);
         if (levelCompletePanel != null) levelCompletePanel.SetActive(false);
@@ -72,6 +71,7 @@ public class CardMatchController : MonoBehaviour
 
         PreviewAllCards(); // Show all cards briefly
     }
+
 
 
     #region Timer
@@ -89,11 +89,11 @@ public class CardMatchController : MonoBehaviour
 
     private IEnumerator PreviewRoutine()
     {
-        // Show all cards
+        // Show all cards (front side)
         foreach (var c in card)
         {
             c.cardBack.SetActive(false); // Show front
-          
+            //c.transform.localScale = Vector3.one;
         }
 
         yield return new WaitForSeconds(previewTime);
@@ -104,7 +104,11 @@ public class CardMatchController : MonoBehaviour
             c.cardBack.SetActive(true); // Show back
             c.transform.localRotation = Quaternion.identity;
         }
+
+        // Start the game timer after preview
+        StartTimer();
     }
+
 
     private IEnumerator TimerCountdown()
     {
@@ -282,104 +286,105 @@ public class CardMatchController : MonoBehaviour
             StartCoroutine(CompleteGame());
         }
     }
-        private void CheckForLevelComplete()
+    private void CheckForLevelComplete()
+    {
+        foreach (var c in card)
         {
-            foreach (var c in card)
-            {
-                if (!c.selected) return; // If any card not selected → exit
-            }
-
-            // All cards selected → Level Complete
-            timerRunning = false;
-            StartCoroutine(CompleteGame());
-        }
-        #endregion
-
-        #region Bonus Text Animation
-        private void ShowBonusText(string text)
-        {
-            if (bonusText == null) return;
-
-            bonusText.text = text;
-            bonusText.gameObject.SetActive(true);
-            bonusText.transform.localScale = Vector3.zero;
-            bonusText.color = new Color(bonusText.color.r, bonusText.color.g, bonusText.color.b, 1f);
-
-            Sequence seq = DOTween.Sequence();
-            seq.Append(bonusText.transform.DOScale(1f, 0.5f).SetEase(Ease.OutBack));
-            seq.Append(bonusText.transform.DOScale(0f, 0.5f).SetEase(Ease.InBack).SetDelay(0.5f));
-            seq.Join(bonusText.DOFade(0f, 0.5f).SetDelay(0.5f));
-            seq.OnComplete(() => bonusText.gameObject.SetActive(false));
-        }
-        #endregion
-
-        #region Complete & Fail
-        private IEnumerator CompleteGame()
-        {
-            SaveHighScore();
-            yield return new WaitForSeconds(1f);
-
-            if (levelCompletePanel != null)
-            {
-                levelCompletePanel.SetActive(true);
-                levelCompleteScoreText.text = "Score: " + _score;
-                levelCompleteHighScoreText.text = "High Score: " + GetHighScore();
-
-                AnimatePanel(levelCompletePanel);
-            }
+            if (!c.selected) return; // If any card not selected → exit
         }
 
-        private void ShowLevelFailed()
-        {
-            SaveHighScore();
-
-            if (levelFailedPanel != null)
-            {
-                levelFailedPanel.SetActive(true);
-                levelFailedScoreText.text = "Score: " + _score;
-                levelFailedHighScoreText.text = "High Score: " + GetHighScore();
-
-                AnimatePanel(levelFailedPanel);
-            }
-        }
-
-        private void AnimatePanel(GameObject panel)
-        {
-            CanvasGroup cg = panel.GetComponent<CanvasGroup>();
-            if (cg == null) cg = panel.AddComponent<CanvasGroup>();
-            cg.alpha = 0;
-            panel.transform.localScale = Vector3.zero;
-
-            Sequence seq = DOTween.Sequence();
-            seq.Append(panel.transform.DOScale(1f, 0.5f).SetEase(Ease.OutBack));
-            seq.Join(cg.DOFade(1f, 0.5f));
-        }
-
-        private void SaveHighScore()
-        {
-            int highScore = PlayerPrefs.GetInt("HighScore", 0);
-            if (_score > highScore)
-            {
-                PlayerPrefs.SetInt("HighScore", _score);
-                PlayerPrefs.Save();
-            }
-        }
-
-        private int GetHighScore()
-        {
-            return PlayerPrefs.GetInt("HighScore", 0);
-        }
-        #endregion
-
-        #region Menu & Retry
-        public void RetryLevel()
-        {
-            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
-        }
-
-        public void MainMenu()
-        {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
-        }
-        #endregion
+        // All cards selected → Level Complete
+        timerRunning = false;
+        StartCoroutine(CompleteGame());
     }
+    #endregion
+
+    #region Bonus Text Animation
+    private void ShowBonusText(string text)
+    {
+        if (bonusText == null) return;
+
+        bonusText.text = text;
+        bonusText.gameObject.SetActive(true);
+        bonusText.transform.localScale = Vector3.zero;
+        bonusText.color = new Color(bonusText.color.r, bonusText.color.g, bonusText.color.b, 1f);
+
+        Sequence seq = DOTween.Sequence();
+        seq.Append(bonusText.transform.DOScale(1f, 0.5f).SetEase(Ease.OutBack));
+        seq.Append(bonusText.transform.DOScale(0f, 0.5f).SetEase(Ease.InBack).SetDelay(0.5f));
+        seq.Join(bonusText.DOFade(0f, 0.5f).SetDelay(0.5f));
+        seq.OnComplete(() => bonusText.gameObject.SetActive(false));
+    }
+    #endregion
+
+    #region Complete & Fail
+    private IEnumerator CompleteGame()
+    {
+        SaveHighScore();
+        yield return new WaitForSeconds(1f);
+
+        if (levelCompletePanel != null)
+        {
+            levelCompletePanel.SetActive(true);
+            levelCompleteScoreText.text = "Score: " + _score;
+            levelCompleteHighScoreText.text = "High Score: " + GetHighScore();
+
+            AnimatePanel(levelCompletePanel);
+        }
+    }
+
+    private void ShowLevelFailed()
+    {
+        SaveHighScore();
+
+        if (levelFailedPanel != null)
+        {
+            levelFailedPanel.SetActive(true);
+            levelFailedScoreText.text = "Score: " + _score;
+            levelFailedHighScoreText.text = "High Score: " + GetHighScore();
+
+            AnimatePanel(levelFailedPanel);
+        }
+    }
+
+    private void AnimatePanel(GameObject panel)
+    {
+        CanvasGroup cg = panel.GetComponent<CanvasGroup>();
+        if (cg == null) cg = panel.AddComponent<CanvasGroup>();
+        cg.alpha = 0;
+        panel.transform.localScale = Vector3.zero;
+
+        Sequence seq = DOTween.Sequence();
+        seq.Append(panel.transform.DOScale(1f, 0.5f).SetEase(Ease.OutBack));
+        seq.Join(cg.DOFade(1f, 0.5f));
+    }
+
+    private void SaveHighScore()
+    {
+        int highScore = PlayerPrefs.GetInt("HighScore", 0);
+        if (_score > highScore)
+        {
+            PlayerPrefs.SetInt("HighScore", _score);
+            PlayerPrefs.Save();
+        }
+    }
+
+    private int GetHighScore()
+    {
+        return PlayerPrefs.GetInt("HighScore", 0);
+    }
+    #endregion
+
+    #region Menu & Retry
+    public void RetryLevel()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+    }
+
+    public void MainMenu()
+    {
+        LoadingManager.Instance.LoadScene(GameSceneName);
+        //UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
+    }
+    #endregion
+}
