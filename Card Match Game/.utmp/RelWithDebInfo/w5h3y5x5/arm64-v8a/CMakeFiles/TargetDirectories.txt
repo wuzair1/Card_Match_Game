@@ -1,0 +1,5 @@
+C:/WorkSpace/Card Match Game/Card_Match_Game/Card Match Game/.utmp/RelWithDebInfo/w5h3y5x5/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/WorkSpace/Card Match Game/Card_Match_Game/Card Match Game/.utmp/RelWithDebInfo/w5h3y5x5/arm64-v8a/CMakeFiles/rebuild_cache.dir
+C:/WorkSpace/Card Match Game/Card_Match_Game/Card Match Game/.utmp/RelWithDebInfo/w5h3y5x5/arm64-v8a/GameActivity/CMakeFiles/game.dir
+C:/WorkSpace/Card Match Game/Card_Match_Game/Card Match Game/.utmp/RelWithDebInfo/w5h3y5x5/arm64-v8a/GameActivity/CMakeFiles/edit_cache.dir
+C:/WorkSpace/Card Match Game/Card_Match_Game/Card Match Game/.utmp/RelWithDebInfo/w5h3y5x5/arm64-v8a/GameActivity/CMakeFiles/rebuild_cache.dir

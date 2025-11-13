@@ -1,0 +1,17 @@
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\GAToUnityCallbacks.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\MacroEnd.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\MacroHeaderBegin.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\MacroSourceBegin.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGAApplication.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGAConfiguration.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGADebug.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGAEvents.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGAInput.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGASoftKeyboard.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGASoftKeyboardCallbacks.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGATypes.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGAVersion.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UnityToGACallbacks.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UnityToGAConfigurationCallbacks.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UnityToGAKeyEventCallbacks.h
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UnityToGAMotionEventCallbacks.h

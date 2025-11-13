@@ -1,0 +1,2 @@
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\CMakeLists.txt
+C:\WorkSpace\Card Match Game\Card_Match_Game\Card Match Game\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\CMakeLists.txt
