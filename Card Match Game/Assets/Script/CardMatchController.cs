@@ -56,6 +56,8 @@ public class CardMatchController : MonoBehaviour
 
     [SerializeField] private int _score = 0;
     [SerializeField] private int MatchCard = 0;
+    [Header("Preview Settings")]
+    public float previewTime = 3f; // Time to show all cards at start
 
     public bool canReveal => _secondRevealed == null;
 
@@ -67,7 +69,10 @@ public class CardMatchController : MonoBehaviour
         if (levelFailedPanel != null) levelFailedPanel.SetActive(false);
         if (levelCompletePanel != null) levelCompletePanel.SetActive(false);
         if (bonusText != null) bonusText.gameObject.SetActive(false);
+
+        PreviewAllCards(); // Show all cards briefly
     }
+
 
     #region Timer
     private void StartTimer()
@@ -76,6 +81,29 @@ public class CardMatchController : MonoBehaviour
         timerRunning = true;
         UpdateTimerUI();
         StartCoroutine(TimerCountdown());
+    }
+    private void PreviewAllCards()
+    {
+        StartCoroutine(PreviewRoutine());
+    }
+
+    private IEnumerator PreviewRoutine()
+    {
+        // Show all cards
+        foreach (var c in card)
+        {
+            c.cardBack.SetActive(false); // Show front
+          
+        }
+
+        yield return new WaitForSeconds(previewTime);
+
+        // Hide all cards again (flip back)
+        foreach (var c in card)
+        {
+            c.cardBack.SetActive(true); // Show back
+            c.transform.localRotation = Quaternion.identity;
+        }
     }
 
     private IEnumerator TimerCountdown()

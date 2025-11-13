@@ -7,7 +7,7 @@ using DG.Tweening;
 public class MatchMainCard : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private CardMatchController controller;
-    [SerializeField] private GameObject cardBack;
+    [SerializeField] public GameObject cardBack;
     [SerializeField] private Animator cardAnimation;
 
     public Image img_Back;
