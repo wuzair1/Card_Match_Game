@@ -1,65 +1,60 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using DG.Tweening;
+
 public class CardMatchController : MonoBehaviour
 {
-    public int totalSize;
+    [Header("Grid Settings")]
+    public int totalSize = 12;
     public int gridRows = 4;
     public int gridCols = 3;
     public float offsetX = 11f;
     public float offsetY = 10.27f;
 
+    [Header("Cards & Images")]
+    [SerializeField] private MatchMainCard[] card;
+    [SerializeField] private Sprite[] images; // All available images
+    [SerializeField] private Sprite[] images6; // Selected for this level
+
+    [Header("Effects & UI")]
+    public AudioSource matchSound;
+
     private List<int> numberList = new List<int>();
     private List<int> selectedNumbers = new List<int>();
-    [SerializeField] private MatchMainCard[] card;
-    [SerializeField] private Sprite[] images;
-    [SerializeField] private Sprite[] images6;
-    public MatchMainCard dummyLeft;
-    public MatchMainCard dummyRight;
-    public Transform leftPos;
-    public Transform rightPos;
-    public float moveDuration = 1.5f;
 
-    public GameObject collisionParticle;
-    public GameObject blockPanel;
-    public GameObject levelCompletePanel;
     private MatchMainCard _firstRevealed;
     private MatchMainCard _secondRevealed;
-    public AudioSource matchSound;
-    // Declare firstMov and secondMov
-    private Vector3 firstMov = Vector3.zero;
-    private Vector3 secondMov = Vector3.zero;
 
-    public bool Check;
-    public int i;
+    private bool isChecking = false; // Prevent multiple clicks during check
+
     public bool canReveal => _secondRevealed == null;
+
+    private void Start()
+    {
+        InitializeCards();
+    }
+
+    #region Card Initialization
     private void InitializeCards()
     {
         int[] numbers = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5 };
         numbers = ShuffleArray(numbers);
-        numberList.AddRange(new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 });
+
+        numberList.Clear();
+        numberList.AddRange(new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
 
         images6 = new Sprite[6];
-
         GetRandomNumbers(6);
 
-        for (int i = 0; i < totalSize; i++)
+        for (int i = 0; i < totalSize && i < numbers.Length; i++)
         {
             int id = numbers[i];
             card[i].ChangeSprite(id, images6[id]);
         }
-
-
     }
-    private void Start()
-    {
-        InitializeCards();
-        
-    }
+
     public void GetRandomNumbers(int count)
     {
         selectedNumbers.Clear();
@@ -71,16 +66,12 @@ public class CardMatchController : MonoBehaviour
             int selectedNumber = numberList[randomIndex];
 
             if (!selectedNumbers.Contains(selectedNumber))
-            {
                 selectedNumbers.Add(selectedNumber);
-            }
         }
 
-        int no = 0;
-        foreach (int number in selectedNumbers)
+        for (int i = 0; i < selectedNumbers.Count; i++)
         {
-            images6[no] = images[number];
-            no++;
+            images6[i] = images[selectedNumbers[i]];
         }
     }
 
@@ -94,22 +85,31 @@ public class CardMatchController : MonoBehaviour
         }
         return newArray;
     }
-    public void CardRevealed(MatchMainCard card)
+    #endregion
+
+    #region Card Reveal & Match
+    public void CardRevealed(MatchMainCard cardRevealed)
     {
+        if (isChecking || cardRevealed.selected)
+            return;
+
         if (_firstRevealed == null)
         {
-            _firstRevealed = card;
-            card.selected = true;
+            _firstRevealed = cardRevealed;
+            _firstRevealed.selected = true;
         }
-        else if (!card.selected)
+        else
         {
-            _secondRevealed = card;
+            _secondRevealed = cardRevealed;
+            _secondRevealed.selected = true;
             StartCoroutine(CheckMatch());
-            card.selected = true;
         }
     }
+
     private IEnumerator CheckMatch()
     {
+        isChecking = true;
+
         if (_firstRevealed.id == _secondRevealed.id)
         {
             HandleTileMatch();
@@ -122,25 +122,29 @@ public class CardMatchController : MonoBehaviour
 
         _firstRevealed = null;
         _secondRevealed = null;
-
-     
+        isChecking = false;
     }
+
     private void HandleTileMismatch()
     {
-        print("Tile Not Match");
-        if (PlayerPrefs.GetInt("Sound") == 1)
-        {
-            //AudioManager.Instance.PlaySfx("Miss_Match_Tile");
-        }
-        _firstRevealed.Unreveal();
-        _secondRevealed.Unreveal();
+        Debug.Log("Tile Not Match");
+
+        if (_firstRevealed != null) _firstRevealed.Unreveal();
+        if (_secondRevealed != null) _secondRevealed.Unreveal();
     }
+
     private void HandleTileMatch()
     {
-        print("Tile Match");
-      
-   
+        Debug.Log("Tile Match");
 
-   
+        if (matchSound != null && PlayerPrefs.GetInt("Sound", 1) == 1)
+        {
+            matchSound.Play();
+        }
+
+        // Optional: Add particle effect or tween animation here
+        _firstRevealed.transform.DOScale(Vector3.zero, 0.3f);
+        _secondRevealed.transform.DOScale(Vector3.zero, 0.3f);
     }
+    #endregion
 }
