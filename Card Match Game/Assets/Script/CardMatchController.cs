@@ -23,10 +23,11 @@ public class CardMatchController : MonoBehaviour
 
     private List<int> numberList = new List<int>();
     private List<int> selectedNumbers = new List<int>();
-
+    public GameObject levelCompletePanel;
     private MatchMainCard _firstRevealed;
     private MatchMainCard _secondRevealed;
-
+    [SerializeField] private int _score = 0;
+    [SerializeField] private Text scoreLabel;
     private bool isChecking = false; // Prevent multiple clicks during check
 
     public bool canReveal => _secondRevealed == null;
@@ -119,7 +120,10 @@ public class CardMatchController : MonoBehaviour
             yield return new WaitForSeconds(1f);
             HandleTileMismatch();
         }
-
+        if (_score >= 6)
+        {
+            StartCoroutine(CompleteGame());
+        }
         _firstRevealed = null;
         _secondRevealed = null;
         isChecking = false;
@@ -136,7 +140,8 @@ public class CardMatchController : MonoBehaviour
     private void HandleTileMatch()
     {
         Debug.Log("Tile Match");
-
+        _score++;
+        scoreLabel.text = "Score: " + _score;
         if (matchSound != null && PlayerPrefs.GetInt("Sound", 1) == 1)
         {
             matchSound.Play();
@@ -147,4 +152,9 @@ public class CardMatchController : MonoBehaviour
         _secondRevealed.transform.DOScale(Vector3.zero, 0.3f);
     }
     #endregion
+    private IEnumerator CompleteGame()
+    {
+        yield return new WaitForSeconds(1);
+        levelCompletePanel.SetActive(true);
+    }
 }
