@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -23,15 +22,15 @@ public class MatchMainCard : MonoBehaviour, IPointerClickHandler
         if (!cardBack.activeSelf || !controller.canReveal)
             return;
 
-        // Play click sound
-        if (clickSound != null) clickSound.Play();
+        clickSound?.Play();
 
-        // Flip animation
-        cardBack.transform.DORotate(new Vector3(0, 90, 0), 0.2f).OnComplete(() =>
-        {
-            cardBack.SetActive(false); // Hide back
-            controller.CardRevealed(this); // Notify controller
-        });
+        cardBack.transform
+            .DORotate(new Vector3(0, 90, 0), 0.2f)
+            .OnComplete(() =>
+            {
+                cardBack.SetActive(false);
+                controller.CardRevealed(this);
+            });
     }
 
     public void ChangeSprite(int id, Sprite image)
@@ -42,8 +41,8 @@ public class MatchMainCard : MonoBehaviour, IPointerClickHandler
 
     public void Unreveal()
     {
+        selected = false;
         cardBack.SetActive(true);
         cardBack.transform.DORotate(Vector3.zero, 0.2f);
-        selected = false;
     }
 }

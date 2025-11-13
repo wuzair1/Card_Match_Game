@@ -15,26 +15,46 @@ public class CardMatchController : MonoBehaviour
 
     [Header("Cards & Images")]
     [SerializeField] private MatchMainCard[] card;
-    [SerializeField] private Sprite[] images; // All available images
-    [SerializeField] private Sprite[] images6; // Selected for this level
+    [SerializeField] private Sprite[] images;   // All available images
+    [SerializeField] private Sprite[] images6;  // Selected for this level
 
     [Header("Effects & UI")]
     public AudioSource matchSound;
+    public GameObject levelCompletePanel;
+    [SerializeField] private Text scoreLabel;
+    [SerializeField] private Text timerLabel;
 
     private List<int> numberList = new List<int>();
     private List<int> selectedNumbers = new List<int>();
-    public GameObject levelCompletePanel;
     private MatchMainCard _firstRevealed;
     private MatchMainCard _secondRevealed;
-    [SerializeField] private int _score = 0;
-    [SerializeField] private Text scoreLabel;
-    private bool isChecking = false; // Prevent multiple clicks during check
+    private bool isChecking = false;
+
+    private int _score = 0;
+    private float _timeRemaining = 60f; // Initial timer duration
+    private bool _isTimerRunning = true;
 
     public bool canReveal => _secondRevealed == null;
 
     private void Start()
     {
         InitializeCards();
+        UpdateTimerLabel();
+    }
+
+    private void Update()
+    {
+        if (!_isTimerRunning) return;
+
+        _timeRemaining -= Time.deltaTime;
+        if (_timeRemaining <= 0)
+        {
+            _timeRemaining = 0;
+            _isTimerRunning = false;
+            StartCoroutine(CompleteGame());
+        }
+
+        UpdateTimerLabel();
     }
 
     #region Card Initialization
@@ -44,7 +64,8 @@ public class CardMatchController : MonoBehaviour
         numbers = ShuffleArray(numbers);
 
         numberList.Clear();
-        numberList.AddRange(new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
+        for (int i = 0; i < totalSize; i++)
+            numberList.Add(i);
 
         images6 = new Sprite[6];
         GetRandomNumbers(6);
@@ -56,7 +77,7 @@ public class CardMatchController : MonoBehaviour
         }
     }
 
-    public void GetRandomNumbers(int count)
+    private void GetRandomNumbers(int count)
     {
         selectedNumbers.Clear();
         count = Mathf.Min(count, numberList.Count);
@@ -65,26 +86,22 @@ public class CardMatchController : MonoBehaviour
         {
             int randomIndex = Random.Range(0, numberList.Count);
             int selectedNumber = numberList[randomIndex];
-
             if (!selectedNumbers.Contains(selectedNumber))
                 selectedNumbers.Add(selectedNumber);
         }
 
         for (int i = 0; i < selectedNumbers.Count; i++)
-        {
             images6[i] = images[selectedNumbers[i]];
-        }
     }
 
     private int[] ShuffleArray(int[] numbers)
     {
-        int[] newArray = numbers.Clone() as int[];
-        for (int i = 0; i < newArray.Length; i++)
+        for (int i = 0; i < numbers.Length; i++)
         {
-            int r = Random.Range(i, newArray.Length);
-            (newArray[i], newArray[r]) = (newArray[r], newArray[i]);
+            int r = Random.Range(i, numbers.Length);
+            (numbers[i], numbers[r]) = (numbers[r], numbers[i]);
         }
-        return newArray;
+        return numbers;
     }
     #endregion
 
@@ -120,10 +137,10 @@ public class CardMatchController : MonoBehaviour
             yield return new WaitForSeconds(1f);
             HandleTileMismatch();
         }
-        if (_score >= 6)
-        {
+
+        if (_score >= 60)
             StartCoroutine(CompleteGame());
-        }
+
         _firstRevealed = null;
         _secondRevealed = null;
         isChecking = false;
@@ -132,29 +149,57 @@ public class CardMatchController : MonoBehaviour
     private void HandleTileMismatch()
     {
         Debug.Log("Tile Not Match");
+        _timeRemaining -= 10f;
+        if (_timeRemaining < 0) _timeRemaining = 0;
 
-        if (_firstRevealed != null) _firstRevealed.Unreveal();
-        if (_secondRevealed != null) _secondRevealed.Unreveal();
+        UpdateTimerLabel();
+
+        _firstRevealed?.Unreveal();
+        _secondRevealed?.Unreveal();
     }
 
     private void HandleTileMatch()
     {
         Debug.Log("Tile Match");
-        _score++;
-        scoreLabel.text = "Score: " + _score;
-        if (matchSound != null && PlayerPrefs.GetInt("Sound", 1) == 1)
-        {
-            matchSound.Play();
-        }
 
-        // Optional: Add particle effect or tween animation here
-        _firstRevealed.transform.DOScale(Vector3.zero, 0.3f);
-        _secondRevealed.transform.DOScale(Vector3.zero, 0.3f);
+        if (PlayerPrefs.GetInt("Sound", 1) == 1)
+            matchSound?.Play();
+
+        Transform card1 = _firstRevealed.transform;
+        Transform card2 = _secondRevealed.transform;
+        Vector3 scorePos = scoreLabel.transform.position;
+
+        Sequence seq = DOTween.Sequence();
+
+        seq.Append(card1.DOMove(scorePos, 0.25f).SetEase(Ease.InOutQuad));
+        seq.Join(card2.DOMove(scorePos, 0.25f).SetEase(Ease.InOutQuad));
+
+        seq.Join(card1.DOScale(0.5f, 0.2f));
+        seq.Join(card2.DOScale(0.5f, 0.2f));
+
+        seq.AppendInterval(0.1f);
+
+        seq.AppendCallback(() =>
+        {
+            card1.gameObject.SetActive(false);
+            card2.gameObject.SetActive(false);
+
+            _score += 10;
+            scoreLabel.text = $"Score: {_score}";
+        });
     }
     #endregion
+
+    private void UpdateTimerLabel()
+    {
+        int minutes = Mathf.FloorToInt(_timeRemaining / 60);
+        int seconds = Mathf.FloorToInt(_timeRemaining % 60);
+        timerLabel.text = $"Time: {minutes:00}:{seconds:00}";
+    }
+
     private IEnumerator CompleteGame()
     {
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(1f);
         levelCompletePanel.SetActive(true);
     }
 }
