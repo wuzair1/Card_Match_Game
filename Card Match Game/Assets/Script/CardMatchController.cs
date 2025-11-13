@@ -15,14 +15,22 @@ public class CardMatchController : MonoBehaviour
 
     [Header("Cards & Images")]
     [SerializeField] private MatchMainCard[] card;
-    [SerializeField] private Sprite[] images; 
-    [SerializeField] private Sprite[] images6; 
+    [SerializeField] private Sprite[] images;
+    private Sprite[] images6;
 
     [Header("Effects & UI")]
     public AudioSource matchSound;
     public AudioSource mismatchSound;
+    public AudioSource bonusSound;
     public Text scoreLabel;
+
+    [Header("Panels & Score UI")]
     public GameObject levelCompletePanel;
+    public Text levelCompleteScoreText;
+    public Text levelCompleteHighScoreText;
+    public GameObject levelFailedPanel;
+    public Text levelFailedScoreText;
+    public Text levelFailedHighScoreText;
 
     [Header("Timer Settings")]
     public Text timerText;
@@ -33,6 +41,13 @@ public class CardMatchController : MonoBehaviour
     private Color lowTimeColor = Color.red;
     private Coroutine flashRoutine;
 
+    [Header("Bonus Settings")]
+    public float bonusTimeWindow = 5f; // 5 seconds for bonus
+    private float lastMatchTime = -10f;
+
+    [Header("Bonus UI")]
+    public Text bonusText; // Assign in Inspector
+
     private List<int> numberList = new List<int>();
     private List<int> selectedNumbers = new List<int>();
     private MatchMainCard _firstRevealed;
@@ -40,12 +55,18 @@ public class CardMatchController : MonoBehaviour
     private bool isChecking = false;
 
     [SerializeField] private int _score = 0;
+    [SerializeField] private int MatchCard = 0;
+
     public bool canReveal => _secondRevealed == null;
 
     private void Start()
     {
         InitializeCards();
         StartTimer();
+
+        if (levelFailedPanel != null) levelFailedPanel.SetActive(false);
+        if (levelCompletePanel != null) levelCompletePanel.SetActive(false);
+        if (bonusText != null) bonusText.gameObject.SetActive(false);
     }
 
     #region Timer
@@ -68,8 +89,7 @@ public class CardMatchController : MonoBehaviour
             {
                 currentTime = 0;
                 timerRunning = false;
-                // Optional: End game when time runs out
-                levelCompletePanel.SetActive(true);
+                ShowLevelFailed();
             }
 
             UpdateTimerUI();
@@ -81,21 +101,14 @@ public class CardMatchController : MonoBehaviour
         int minutes = Mathf.FloorToInt(currentTime / 60);
         int seconds = Mathf.FloorToInt(currentTime % 60);
         timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
-
-        if (currentTime <= 20)
-            timerText.color = lowTimeColor;
-        else
-            timerText.color = normalColor;
+        timerText.color = currentTime <= 20 ? lowTimeColor : normalColor;
     }
-
 
     private IEnumerator FlashRedTimer()
     {
-        if (flashRoutine != null)
-            StopCoroutine(flashRoutine);
-
+        if (flashRoutine != null) StopCoroutine(flashRoutine);
         flashRoutine = StartCoroutine(FlashRoutine());
-        mismatchSound.Play();
+        mismatchSound?.Play();
         yield return null;
     }
 
@@ -114,7 +127,7 @@ public class CardMatchController : MonoBehaviour
         numbers = ShuffleArray(numbers);
 
         numberList.Clear();
-        numberList.AddRange(new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
+        for (int i = 0; i < totalSize; i++) numberList.Add(i);
 
         images6 = new Sprite[6];
         GetRandomNumbers(6);
@@ -126,53 +139,47 @@ public class CardMatchController : MonoBehaviour
         }
     }
 
-    public void GetRandomNumbers(int count)
+    private void GetRandomNumbers(int count)
     {
         selectedNumbers.Clear();
         count = Mathf.Min(count, numberList.Count);
 
         while (selectedNumbers.Count < count)
         {
-            int randomIndex = Random.Range(0, numberList.Count);
-            int selectedNumber = numberList[randomIndex];
-
+            int selectedNumber = numberList[Random.Range(0, numberList.Count)];
             if (!selectedNumbers.Contains(selectedNumber))
                 selectedNumbers.Add(selectedNumber);
         }
 
         for (int i = 0; i < selectedNumbers.Count; i++)
-        {
             images6[i] = images[selectedNumbers[i]];
-        }
     }
 
     private int[] ShuffleArray(int[] numbers)
     {
-        int[] newArray = numbers.Clone() as int[];
-        for (int i = 0; i < newArray.Length; i++)
+        for (int i = 0; i < numbers.Length; i++)
         {
-            int r = Random.Range(i, newArray.Length);
-            (newArray[i], newArray[r]) = (newArray[r], newArray[i]);
+            int r = Random.Range(i, numbers.Length);
+            (numbers[i], numbers[r]) = (numbers[r], numbers[i]);
         }
-        return newArray;
+        return numbers;
     }
     #endregion
 
     #region Card Reveal & Match
     public void CardRevealed(MatchMainCard cardRevealed)
     {
-        if (isChecking || cardRevealed.selected)
-            return;
+        if (isChecking || cardRevealed.selected) return;
 
         if (_firstRevealed == null)
         {
             _firstRevealed = cardRevealed;
-            _firstRevealed.selected = true;
+            _firstRevealed.selected = true; // Mark as revealed
         }
         else
         {
             _secondRevealed = cardRevealed;
-            _secondRevealed.selected = true;
+            _secondRevealed.selected = true; // Mark as revealed
             StartCoroutine(CheckMatch());
         }
     }
@@ -191,11 +198,6 @@ public class CardMatchController : MonoBehaviour
             HandleTileMismatch();
         }
 
-        if (_score >= 60)
-        {
-            StartCoroutine(CompleteGame());
-        }
-
         _firstRevealed = null;
         _secondRevealed = null;
         isChecking = false;
@@ -204,35 +206,152 @@ public class CardMatchController : MonoBehaviour
     private void HandleTileMismatch()
     {
         Debug.Log("Tile Not Match");
-
-        currentTime = Mathf.Max(0, currentTime - 5f); // Deduct 10 seconds
+        currentTime = Mathf.Max(0, currentTime - 5f);
         StartCoroutine(FlashRedTimer());
 
-        if (_firstRevealed != null) _firstRevealed.Unreveal();
-        if (_secondRevealed != null) _secondRevealed.Unreveal();
+        _firstRevealed.selected = false;
+        _secondRevealed.selected = false;
+
+        _firstRevealed?.Unreveal();
+        _secondRevealed?.Unreveal();
     }
 
     private void HandleTileMatch()
     {
         Debug.Log("Tile Match");
-        _score += 10; // Fixed increment
-        currentTime = Mathf.Max(0, currentTime + 20f); // Deduct 10 seconds
+        MatchCard++;
+        bool bonus = (Time.time - lastMatchTime) <= bonusTimeWindow;
+        _score += 10;
+
+        if (bonus)
+        {
+            _score += 20;
+            bonusSound?.Play();
+            ShowBonusText("+20 Bonus!");
+        }
+
+        lastMatchTime = Time.time;
         scoreLabel.text = "Score: " + _score;
 
         if (matchSound != null && PlayerPrefs.GetInt("Sound", 1) == 1)
-        {
             matchSound.Play();
+
+        // Animate matched cards
+        Sequence seq = DOTween.Sequence();
+        seq.Append(_firstRevealed.transform.DOScale(Vector3.zero, 0.3f));
+        seq.Join(_secondRevealed.transform.DOScale(Vector3.zero, 0.3f));
+        seq.OnComplete(() =>
+        {
+            _firstRevealed.gameObject.SetActive(false);
+            _secondRevealed.gameObject.SetActive(false);
+
+            // Check if all cards selected = true → level complete
+            CheckForLevelComplete();
+        });
+
+        if (MatchCard == 6)
+        {
+            StartCoroutine(CompleteGame());
+        }
+    }
+        private void CheckForLevelComplete()
+        {
+            foreach (var c in card)
+            {
+                if (!c.selected) return; // If any card not selected → exit
+            }
+
+            // All cards selected → Level Complete
+            timerRunning = false;
+            StartCoroutine(CompleteGame());
+        }
+        #endregion
+
+        #region Bonus Text Animation
+        private void ShowBonusText(string text)
+        {
+            if (bonusText == null) return;
+
+            bonusText.text = text;
+            bonusText.gameObject.SetActive(true);
+            bonusText.transform.localScale = Vector3.zero;
+            bonusText.color = new Color(bonusText.color.r, bonusText.color.g, bonusText.color.b, 1f);
+
+            Sequence seq = DOTween.Sequence();
+            seq.Append(bonusText.transform.DOScale(1f, 0.5f).SetEase(Ease.OutBack));
+            seq.Append(bonusText.transform.DOScale(0f, 0.5f).SetEase(Ease.InBack).SetDelay(0.5f));
+            seq.Join(bonusText.DOFade(0f, 0.5f).SetDelay(0.5f));
+            seq.OnComplete(() => bonusText.gameObject.SetActive(false));
+        }
+        #endregion
+
+        #region Complete & Fail
+        private IEnumerator CompleteGame()
+        {
+            SaveHighScore();
+            yield return new WaitForSeconds(1f);
+
+            if (levelCompletePanel != null)
+            {
+                levelCompletePanel.SetActive(true);
+                levelCompleteScoreText.text = "Score: " + _score;
+                levelCompleteHighScoreText.text = "High Score: " + GetHighScore();
+
+                AnimatePanel(levelCompletePanel);
+            }
         }
 
-        // Match animation (disappear)
-        _firstRevealed.transform.DOScale(Vector3.zero, 0.3f);
-        _secondRevealed.transform.DOScale(Vector3.zero, 0.3f);
-    }
-    #endregion
+        private void ShowLevelFailed()
+        {
+            SaveHighScore();
 
-    private IEnumerator CompleteGame()
-    {
-        yield return new WaitForSeconds(1);
-        levelCompletePanel.SetActive(true);
+            if (levelFailedPanel != null)
+            {
+                levelFailedPanel.SetActive(true);
+                levelFailedScoreText.text = "Score: " + _score;
+                levelFailedHighScoreText.text = "High Score: " + GetHighScore();
+
+                AnimatePanel(levelFailedPanel);
+            }
+        }
+
+        private void AnimatePanel(GameObject panel)
+        {
+            CanvasGroup cg = panel.GetComponent<CanvasGroup>();
+            if (cg == null) cg = panel.AddComponent<CanvasGroup>();
+            cg.alpha = 0;
+            panel.transform.localScale = Vector3.zero;
+
+            Sequence seq = DOTween.Sequence();
+            seq.Append(panel.transform.DOScale(1f, 0.5f).SetEase(Ease.OutBack));
+            seq.Join(cg.DOFade(1f, 0.5f));
+        }
+
+        private void SaveHighScore()
+        {
+            int highScore = PlayerPrefs.GetInt("HighScore", 0);
+            if (_score > highScore)
+            {
+                PlayerPrefs.SetInt("HighScore", _score);
+                PlayerPrefs.Save();
+            }
+        }
+
+        private int GetHighScore()
+        {
+            return PlayerPrefs.GetInt("HighScore", 0);
+        }
+        #endregion
+
+        #region Menu & Retry
+        public void RetryLevel()
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+        }
+
+        public void MainMenu()
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
+        }
+        #endregion
     }
-}
